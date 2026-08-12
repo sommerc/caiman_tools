@@ -16,6 +16,7 @@ from loguru import logger
 
 import caiman as cm
 
+from caiman_tools import __version__
 from caiman_tools.logging_utils import setup_logging
 from caiman_tools.params import load_params
 from caiman_tools.pipeline import MovieResult, run_cnmfe_on_movie
@@ -30,6 +31,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
         description="Batch CNMF-E source extraction over tif movies using CaImAn."
     )
     parser.add_argument("tifs", nargs="+", type=Path, help="Input tif movie(s) to process.")
+    parser.add_argument("--version", action="version", version=f"caiman-cnmfe {__version__}")
     parser.add_argument(
         "--params",
         type=Path,

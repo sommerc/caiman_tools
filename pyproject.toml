@@ -1,6 +1,6 @@
 [project]
 name = "caiman-tools"
-version = "0.1.0"
+dynamic = ["version"]
 description = "CLI tools for batch-processing calcium imaging movies with CaImAn."
 readme = "README.md"
 authors = [
@@ -17,5 +17,14 @@ caiman-cnmfe = "caiman_tools.cli:main"
 caiman-view = "caiman_tools.cli_view:main"
 
 [build-system]
-requires = ["uv_build>=0.10.12,<0.11.0"]
-build-backend = "uv_build"
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "src/caiman_tools/_version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/caiman_tools"]

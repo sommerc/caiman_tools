@@ -15,6 +15,7 @@ from pathlib import Path
 
 from loguru import logger
 
+from caiman_tools import __version__
 from caiman_tools.logging_utils import setup_logging
 from caiman_tools.view import view_components
 
@@ -41,6 +42,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
         "(writes a standalone bokeh HTML viewer, like estimates.nb_view_components)."
     )
     parser.add_argument("hdf5", type=Path, help="CaImAn hdf5 result file (e.g. from caiman-cnmfe).")
+    parser.add_argument("--version", action="version", version=f"caiman-view {__version__}")
     parser.add_argument(
         "--which",
         choices=["accepted", "rejected", "all"],
