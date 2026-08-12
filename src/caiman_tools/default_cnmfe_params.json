@@ -1,0 +1,52 @@
+{
+  "cnmf_params": {
+    "fr": 10,
+    "decay_time": 0.4,
+
+    "motion_correct": true,
+    "pw_rigid": false,
+    "gSig_filt": [3, 3],
+    "max_shifts": [5, 5],
+    "strides": [48, 48],
+    "overlaps": [24, 24],
+    "max_deviation_rigid": 3,
+    "border_nan": "copy",
+
+    "method_init": "corr_pnr",
+    "K": null,
+    "gSig": [3, 3],
+    "gSiz": [7, 7],
+    "merge_thr": 0.7,
+    "p": 1,
+    "tsub": 2,
+    "ssub": 1,
+    "rf": 40,
+    "stride": 20,
+    "only_init": true,
+    "nb": 0,
+    "nb_patch": 0,
+    "method_deconvolution": "oasis",
+    "low_rank_background": null,
+    "update_background_components": true,
+    "min_corr": 0.85,
+    "min_pnr": 12,
+    "normalize_init": false,
+    "center_psf": true,
+    "ssub_B": 2,
+    "ring_size_factor": 1.4,
+    "del_duplicates": true,
+
+    "min_SNR": 3,
+    "rval_thr": 0.85,
+    "use_cnn": false
+  },
+  "pipeline": {
+    "n_processes": null,
+    "detrend_df_f": {
+      "quantileMin": 8,
+      "frames_window": 250,
+      "flag_auto": false,
+      "use_residuals": false
+    }
+  }
+}
