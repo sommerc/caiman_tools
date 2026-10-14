@@ -14,13 +14,13 @@ CLI tools for batch-processing calcium imaging movies with [CaImAn](https://gith
 2. Install `caiman_tools` into that environment, straight from GitHub:
 
    ```bash
-   python -m pip install "git+ssh://git@github.com/sommerc/caiman_tools.git"
+   python -m pip install "git+https://github.com/sommerc/caiman_tools.git"
    ```
 
    To upgrade to the latest version later, add `--upgrade`:
 
    ```bash
-   python -m pip install --upgrade "git+ssh://git@github.com/sommerc/caiman_tools.git"
+   python -m pip install --upgrade "git+https://github.com/sommerc/caiman_tools.git"
    ```
 
 This installs the `caiman-cnmfe` command-line tool into the `caiman` environment.
