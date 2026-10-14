@@ -1,6 +1,6 @@
 {
   "cnmf_params": {
-    "fr": 10,
+    "fr": 30,
     "decay_time": 0.4,
 
     "motion_correct": true,

@@ -51,7 +51,9 @@ def _motion_correct(tif_path: Path, parameters, cluster):
         bord_px = np.ceil(np.max(np.abs(mot_correct.shifts_rig))).astype(int)
 
     bord_px = 0 if motion_group["border_nan"] == "copy" else int(bord_px)
-    fname_new = cm.save_memmap(fname_mc, base_name="memmap_", order="C", border_to_0=bord_px)
+    fname_new = cm.save_memmap(
+        fname_mc, base_name="memmap_", order="C", border_to_0=bord_px
+    )
     return fname_new, bord_px, mot_correct
 
 
@@ -64,7 +66,9 @@ def _cleanup_memmap_files(*paths: Any) -> None:
             try:
                 Path(candidate).unlink(missing_ok=True)
             except OSError:
-                logger.warning("Could not remove intermediate memmap file %s", candidate)
+                logger.warning(
+                    "Could not remove intermediate memmap file %s", candidate
+                )
 
 
 def run_cnmfe_on_movie(
@@ -91,7 +95,11 @@ def run_cnmfe_on_movie(
     else:
         bord_px = 0
         fname_new = cm.save_memmap(
-            [str(tif_path)], base_name="memmap_", order="C", border_to_0=0, dview=cluster
+            [str(tif_path)],
+            base_name="memmap_",
+            order="C",
+            border_to_0=0,
+            dview=cluster,
         )
 
     Yr, dims, T = cm.load_memmap(fname_new)
@@ -134,6 +142,9 @@ def run_cnmfe_on_movie(
     if model.estimates.F_dff is None:
         model.estimates.detrend_df_f(**pipeline_params["detrend_df_f"])
 
+    # Deconvolve to create S_dff
+    model.estimates.deconvolve(model.params, dff_flag=True)
+
     model.estimates.Cn = correlation_image
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -150,7 +161,9 @@ def run_cnmfe_on_movie(
                 title=f"{output_path.name} (accepted)",
             )
         except ValueError:
-            logger.warning("No accepted components in {}; skipping viewer HTML", tif_path.name)
+            logger.warning(
+                "No accepted components in {}; skipping viewer HTML", tif_path.name
+            )
             view_html = None
 
     if cleanup_memmap:
