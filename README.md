@@ -50,10 +50,11 @@ find /root/path/to/movies -name "*.tif" -print0 | xargs -0 caiman-cnmfe --n-proc
 | --- | --- |
 | `--params PARAMS.json` | JSON file overriding the default CNMF-E parameters (only the keys you provide are overridden — see below). |
 | `--n-processes N` | Number of worker processes for the shared multiprocessing cluster. Defaults to `pipeline.n_processes` in `--params`, or CaImAn's own auto-detected default. |
+| `--fr HZ` | Frame rate for all inputs. By default it is read per movie from `<tif_stem>_timestamps.csv` next to the tif (median frame interval; i.e. the per-plane rate for multi-plane recordings, 10 Hz for 3 planes at 30 Hz), falling back to `cnmf_params.fr` from the params. |
 | `--overwrite` | Reprocess and overwrite outputs that already exist (by default, files with an existing `_caiman.hdf5` output are skipped). |
 | `--cleanup-memmap` | Delete intermediate `.mmap` files after a successful save. |
 | `--skip-view` | Don't auto-generate the `_caiman_view.html` interactive component viewer after saving. |
-hidden). `caiman_tools`' own progress/summary output is always shown. |
+| `--log-level LEVEL` | Verbosity of CaImAn's own internal logging: `NONE` (default, hidden), `DEBUG`, `INFO`, `WARNING`, `ERROR`. `caiman_tools`' own progress/summary output is always shown. |
 
 ### Overriding parameters
 
@@ -73,3 +74,13 @@ e.g. to adjust the CNMF-E initialization thresholds:
 ```bash
 caiman-cnmfe movie.tif --params my_params.json
 ```
+
+## Interactive notebook: tuning parameters on one movie
+
+[`notebooks/cnmfe_interactive.ipynb`](notebooks/cnmfe_interactive.ipynb) runs the same pipeline as
+`caiman-cnmfe` step by step on a single movie (it calls the same `caiman_tools.pipeline` functions)
+
+## Interactive notebook: multi-session registration
+
+[`notebooks/multisession_registration.ipynb`](notebooks/multisession_registration.ipynb) (logic in
+`caiman_tools.multisession`) 

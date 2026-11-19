@@ -9,14 +9,14 @@ alongside the raw and denoised ones, each with its own color and legend label.
 
 from __future__ import annotations
 
-import contextlib
-import webbrowser
 from pathlib import Path
 from typing import Any
 
 import bokeh
+import bokeh.io
 import bokeh.layouts
 import bokeh.plotting as bpl
+from bokeh.resources import CDN
 import matplotlib
 import matplotlib.colors
 import numpy as np
@@ -40,29 +40,13 @@ _TRACE_STYLE = {
 }
 
 
-@contextlib.contextmanager
-def _suppress_browser_autoopen():
-    """bokeh's show() tries to auto-launch a system browser, which can hang
-    indefinitely on headless/remote setups (observed on this cluster over
-    X11 forwarding). Neutralize it for the duration of the call; the CLI
-    layer does its own explicit, detached open if the user opts in."""
-    originals = (webbrowser.open, webbrowser.open_new, webbrowser.open_new_tab)
-    webbrowser.open = lambda *a, **k: True
-    webbrowser.open_new = lambda *a, **k: True
-    webbrowser.open_new_tab = lambda *a, **k: True
-    try:
-        yield
-    finally:
-        webbrowser.open, webbrowser.open_new, webbrowser.open_new_tab = originals
-
-
 def _select(arr: Any, idx: np.ndarray | None) -> Any:
     if arr is None:
         return None
     return arr[idx] if idx is not None else arr
 
 
-def _render_component_viewer(
+def _build_component_viewer(
     A,
     C: np.ndarray,
     S: np.ndarray | None,
@@ -76,7 +60,8 @@ def _render_component_viewer(
     r_values: np.ndarray | None = None,
     SNR: np.ndarray | None = None,
     cnn_preds: np.ndarray | None = None,
-) -> None:
+):
+    """Build the bokeh layout (slider + footprint + traces); doesn't show/save it."""
     if not scipy.sparse.issparse(A):
         A = scipy.sparse.csc_matrix(A)
 
@@ -215,37 +200,33 @@ def _render_component_viewer(
     plot1.image(image=[image_neurons], x=0, y=0, dw=d2, dh=d1, palette=grayp)
     plot1.patch("c1", "c2", alpha=0.6, color="purple", line_width=2, source=source2)
 
+    body = bokeh.layouts.row(
+        plot1 if metrics is None else bokeh.layouts.column(plot1, plot2), plot
+    )
     if nr > 1:
         slider = Slider(start=1, end=nr, value=1, step=1, title="Neuron Number")
         slider.js_on_change("value", callback)
-        bpl.show(
-            bokeh.layouts.layout(
-                [[slider], [bokeh.layouts.row(
-                    plot1 if metrics is None else bokeh.layouts.column(plot1, plot2), plot
-                )]]
-            )
-        )
-    else:
-        bpl.show(
-            bokeh.layouts.row(plot1 if metrics is None else bokeh.layouts.column(plot1, plot2), plot)
-        )
+        return bokeh.layouts.layout([[slider], [body]])
+    return body
 
 
-def render_estimates_view(
+def estimates_view_layout(
     estimates,
     which: str = "accepted",
     cmap: str = "viridis",
     thr: float = 0.9,
-    output_html: Path | None = None,
-    title: str = "components",
-) -> Path:
-    """Write an interactive bokeh viewer for an already-loaded Estimates object."""
+):
+    """Build the interactive component viewer layout for an Estimates object.
+
+    In a notebook, display it with ``bokeh.plotting.show(layout)`` (after
+    ``bokeh.plotting.output_notebook()``).
+    """
     if which == "all":
         idx = None
         n = len(estimates.C)
     else:
         idx = getattr(estimates, _WHICH_TO_IDX_ATTR[which])
-        n = len(idx)
+        n = 0 if idx is None else len(idx)
 
     if n == 0:
         raise ValueError(f"No '{which}' components -- nothing to display.")
@@ -259,24 +240,39 @@ def render_estimates_view(
     else:
         cnn_preds = _select(cnn_preds, idx)
 
-    bpl.output_file(str(output_html), title=title)
-    with _suppress_browser_autoopen():
-        _render_component_viewer(
-            A=A,
-            C=_select(estimates.C, idx),
-            S=_select(estimates.S, idx),
-            F_dff=_select(estimates.F_dff, idx),
-            YrA=_select(estimates.YrA, idx),
-            d1=estimates.dims[0],
-            d2=estimates.dims[1],
-            image_neurons=estimates.Cn,
-            thr=thr,
-            cmap=cmap,
-            r_values=_select(estimates.r_values, idx),
-            SNR=_select(estimates.SNR_comp, idx),
-            cnn_preds=cnn_preds,
-        )
+    return _build_component_viewer(
+        A=A,
+        C=_select(estimates.C, idx),
+        S=_select(estimates.S, idx),
+        F_dff=_select(estimates.F_dff, idx),
+        YrA=_select(estimates.YrA, idx),
+        d1=estimates.dims[0],
+        d2=estimates.dims[1],
+        image_neurons=estimates.Cn,
+        thr=thr,
+        cmap=cmap,
+        r_values=_select(estimates.r_values, idx),
+        SNR=_select(estimates.SNR_comp, idx),
+        cnn_preds=cnn_preds,
+    )
 
+
+def render_estimates_view(
+    estimates,
+    which: str = "accepted",
+    cmap: str = "viridis",
+    thr: float = 0.9,
+    output_html: Path | None = None,
+    title: str = "components",
+) -> Path:
+    """Write an interactive bokeh viewer for an already-loaded Estimates object.
+
+    Uses bokeh.io.save (never show), so no browser is auto-launched -- that
+    hangs on this cluster over X11 forwarding.
+    """
+    layout = estimates_view_layout(estimates, which=which, cmap=cmap, thr=thr)
+    bokeh.io.save(layout, filename=str(output_html), title=title, resources=CDN)
+    n = len(estimates.C) if which == "all" else len(getattr(estimates, _WHICH_TO_IDX_ATTR[which]))
     logger.info("Wrote interactive component viewer to {} ({} '{}' components)", output_html, n, which)
     return output_html
 

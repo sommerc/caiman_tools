@@ -19,11 +19,12 @@ import caiman as cm
 from caiman_tools import __version__
 from caiman_tools.logging_utils import setup_logging
 from caiman_tools.params import load_params
-from caiman_tools.pipeline import MovieResult, run_cnmfe_on_movie
-
-
-def _output_path_for(tif_path: Path) -> Path:
-    return tif_path.parent / f"{tif_path.stem}_caiman.hdf5"
+from caiman_tools.pipeline import (
+    MovieResult,
+    output_path_for,
+    resolve_frame_rate,
+    run_cnmfe_on_movie,
+)
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
@@ -44,6 +45,14 @@ def build_arg_parser() -> argparse.ArgumentParser:
         default=None,
         help="Number of worker processes. Defaults to pipeline.n_processes in params, "
         "or CaImAn's own auto-detected default.",
+    )
+    parser.add_argument(
+        "--fr",
+        type=float,
+        default=None,
+        help="Frame rate (Hz) for all inputs. By default it is computed per movie from "
+        "'<tif_stem>_timestamps.csv' next to the tif (per-plane rate for multi-plane "
+        "recordings), falling back to cnmf_params.fr from the params.",
     )
     parser.add_argument(
         "--overwrite",
@@ -115,7 +124,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         for tif_path in args.tifs:
             tif_path = tif_path.resolve()
-            output_path = _output_path_for(tif_path)
+            output_path = output_path_for(tif_path)
 
             if output_path.exists() and not args.overwrite:
                 logger.info(
@@ -127,7 +136,10 @@ def main(argv: list[str] | None = None) -> int:
             try:
                 result = run_cnmfe_on_movie(
                     tif_path=tif_path,
-                    cnmf_params=cnmf_params,
+                    cnmf_params={
+                        **cnmf_params,
+                        "fr": resolve_frame_rate(tif_path, cnmf_params["fr"], args.fr),
+                    },
                     pipeline_params=pipeline_params,
                     cluster=cluster,
                     n_processes=n_processes,

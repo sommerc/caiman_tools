@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 
-def _load_default_params() -> dict[str, Any]:
+def load_default_params() -> dict[str, Any]:
     data = importlib.resources.files("caiman_tools").joinpath("default_cnmfe_params.json")
     with data.open("r") as f:
         return json.load(f)
@@ -27,9 +27,18 @@ def _deep_merge(base: dict[str, Any], overrides: dict[str, Any]) -> dict[str, An
 
 def load_params(user_params_path: Path | None) -> dict[str, Any]:
     """Load default CNMF-E params, deep-merging a user-supplied JSON on top."""
-    params = _load_default_params()
+    params = load_default_params()
     if user_params_path is not None:
         with open(user_params_path) as f:
             user_params = json.load(f)
         params = _deep_merge(params, user_params)
     return params
+
+
+def save_params(params: dict[str, Any], path: Path) -> Path:
+    """Write a params dict as JSON, usable as ``caiman-cnmfe --params``."""
+    path = Path(path)
+    with open(path, "w") as f:
+        json.dump(params, f, indent=2)
+        f.write("\n")
+    return path
